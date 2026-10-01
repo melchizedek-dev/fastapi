@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from schemas import PostCreate, PostResponse
 
 templates = Jinja2Templates(directory="templates")
 
@@ -57,11 +58,11 @@ def post_details(request: Request, post_id: int):
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
     
 
-@app.get("/api/posts")
+@app.get("/api/posts", response_model=list[PostResponse])
 def get_posts():
     return posts
 
-@app.get("/api/posts/{post_id}")
+@app.get("/api/posts/{post_id}", response_model=PostResponse)
 def single_post(post_id: int):
     for post in posts:
         if post.get("id") == post_id:
@@ -102,3 +103,28 @@ def validation_exception_handler(request: Request, exception: RequestValidationE
         },
         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
     )
+
+#Create Post
+@app.post(
+    "/api/posts",
+    response_model=PostResponse,
+    status_code=status.HTTP_201_CREATED
+)
+def create_post(post: PostCreate):
+    new_id = max(post["id"] for post in posts) + 1 if posts else 1
+    new_post = {
+        "id": new_id,
+        "author": post.author,
+        "title": post.title,
+        "content": post.content,
+        "date_posted": "April 24, 2030"
+    }
+    posts.append(new_post)
+    return new_post
+
+
+
+
+
+
+
